@@ -1553,13 +1553,15 @@ This is a fully client-side application. Your content never leaves your browser 
   }
 
   const shareModal = document.getElementById("share-modal");
+  const shareModalWarning = document.getElementById("share-modal-warning");
   const shareModalCopy = document.getElementById("share-modal-copy");
   const shareModalClose = document.getElementById("share-modal-close");
   const shareModalCloseBtn = document.getElementById("share-modal-close-btn");
-  let pendingShareUrl = '';
+  let currentShareUrl = '';
 
-  function openShareModal(shareUrl) {
-    pendingShareUrl = shareUrl;
+  function openShareModal(shareUrl, tooLarge) {
+    currentShareUrl = shareUrl;
+    shareModalWarning.style.display = tooLarge ? "" : "none";
     shareModal.classList.add("active");
     document.addEventListener("keydown", handleShareModalKeydown);
   }
@@ -1582,15 +1584,24 @@ This is a fully client-side application. Your content never leaves your browser 
   shareModalCopy.addEventListener("click", function () {
     const originalText = shareModalCopy.innerHTML;
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(pendingShareUrl).then(() => {
+      navigator.clipboard.writeText(currentShareUrl).then(() => {
         shareModalCopy.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
         setTimeout(() => { shareModalCopy.innerHTML = originalText; }, 2000);
       }).catch(() => {
-        shareModalCopy.innerHTML = '<i class="bi bi-x-circle"></i> Copy failed';
-        setTimeout(() => { shareModalCopy.innerHTML = originalText; }, 2000);
+        // clipboard.writeText failed; nothing further to do in secure context
       });
     } else {
-      shareModalCopy.innerHTML = '<i class="bi bi-x-circle"></i> Copy failed';
+      try {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = currentShareUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        shareModalCopy.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+      } catch (_) {
+        shareModalCopy.innerHTML = '<i class="bi bi-clipboard"></i> Copy failed';
+      }
       setTimeout(() => { shareModalCopy.innerHTML = originalText; }, 2000);
     }
   });
@@ -1609,26 +1620,11 @@ This is a fully client-side application. Your content never leaves your browser 
     const shareUrl = window.location.origin + window.location.pathname + '#share=' + encoded;
     const tooLarge = shareUrl.length > MAX_SHARE_URL_LENGTH;
 
-    if (tooLarge) {
-      openShareModal(shareUrl);
-      return;
+    if (!tooLarge) {
+      window.location.hash = 'share=' + encoded;
     }
 
-    window.location.hash = 'share=' + encoded;
-
-    const originalText = shareButton.innerHTML;
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        shareButton.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
-        setTimeout(() => { shareButton.innerHTML = originalText; }, 2000);
-      }).catch(() => {
-        shareButton.innerHTML = '<i class="bi bi-link-45deg"></i> Linked!';
-        setTimeout(() => { shareButton.innerHTML = originalText; }, 2000);
-      });
-    } else {
-      shareButton.innerHTML = '<i class="bi bi-link-45deg"></i> Linked!';
-      setTimeout(() => { shareButton.innerHTML = originalText; }, 2000);
-    }
+    openShareModal(shareUrl, tooLarge);
   });
 
   function loadFromShareHash() {
