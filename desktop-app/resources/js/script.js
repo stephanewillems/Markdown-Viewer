@@ -302,7 +302,7 @@ This is a fully client-side application. Your content never leaves your browser 
 
       markdownPreview.querySelectorAll("pre code").forEach((block) => {
         try {
-          if (!block.classList.contains('mermaid')) {
+          if (!block.classList.contains('mermaid') && !block.classList.contains('hljs')) {
             hljs.highlightElement(block);
           }
         } catch (e) {
