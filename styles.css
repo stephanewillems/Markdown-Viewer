@@ -1195,6 +1195,8 @@ a:focus {
   padding: 0 4px;
   gap: 0;
   user-select: none;
+  position: relative;
+  z-index: 10;
 }
 
 .tab-list {
