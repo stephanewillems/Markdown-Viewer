@@ -469,6 +469,47 @@ This is a fully client-side application. Your content never leaves your browser 
     if (activeItem) {
       activeItem.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
+
+    renderMobileTabList(tabsArr, currentActiveTabId);
+  }
+
+  function renderMobileTabList(tabsArr, currentActiveTabId) {
+    const mobileTabList = document.getElementById('mobile-tab-list');
+    if (!mobileTabList) return;
+    mobileTabList.innerHTML = '';
+    tabsArr.forEach(function(tab) {
+      const item = document.createElement('div');
+      item.className = 'mobile-tab-item' + (tab.id === currentActiveTabId ? ' active' : '');
+      item.setAttribute('role', 'tab');
+      item.setAttribute('aria-selected', tab.id === currentActiveTabId ? 'true' : 'false');
+      item.setAttribute('data-tab-id', tab.id);
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'mobile-tab-title';
+      titleSpan.textContent = tab.title || 'Untitled';
+      titleSpan.title = tab.title || 'Untitled';
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'mobile-tab-delete-btn';
+      deleteBtn.setAttribute('aria-label', 'Close ' + (tab.title || 'Untitled'));
+      deleteBtn.title = 'Close document';
+      deleteBtn.innerHTML = '<i class="bi bi-x"></i>';
+
+      deleteBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        deleteTab(tab.id);
+      });
+
+      item.appendChild(titleSpan);
+      item.appendChild(deleteBtn);
+
+      item.addEventListener('click', function() {
+        switchTab(tab.id);
+        closeMobileMenu();
+      });
+
+      mobileTabList.appendChild(item);
+    });
   }
 
   // Close any open tab dropdown when clicking elsewhere in the document
@@ -1071,6 +1112,14 @@ This is a fully client-side application. Your content never leaves your browser 
     themeToggle.click();
     mobileThemeToggle.innerHTML = themeToggle.innerHTML + " Toggle Dark Mode";
   });
+
+  const mobileNewTabBtn = document.getElementById("mobile-new-tab-btn");
+  if (mobileNewTabBtn) {
+    mobileNewTabBtn.addEventListener("click", function() {
+      newTab();
+      closeMobileMenu();
+    });
+  }
   
   initTabs();
   updateMobileStats();
